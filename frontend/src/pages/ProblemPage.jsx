@@ -16,29 +16,33 @@ function ProblemPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [currentProblemId, setCurrentProblemId] = useState("two-sum");
+  const defaultProblemId = Object.keys(PROBLEMS)[0] || null;
+  const [currentProblemId, setCurrentProblemId] = useState(defaultProblemId);
   const [selectedLanguage, setSelectedLanguage] = useState("javascript");
-  const [code, setCode] = useState(PROBLEMS[currentProblemId].starterCode.javascript);
+  const [code, setCode] = useState(
+  (defaultProblemId && PROBLEMS[defaultProblemId]?.starterCode?.javascript) || ""
+);
   const [output, setOutput] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
 
   const currentProblem = PROBLEMS[currentProblemId];
 
-  // update problem when URL param changes
   useEffect(() => {
-    if (id && PROBLEMS[id]) {
-      setCurrentProblemId(id);
-      setCode(PROBLEMS[id].starterCode[selectedLanguage]);
-      setOutput(null);
-    }
-  }, [id, selectedLanguage]);
+  if (id && PROBLEMS[id]) {
+    setCurrentProblemId(id);
+    setCode(PROBLEMS[id]?.starterCode?.[selectedLanguage] || "");
+    setOutput(null);
+  } else if (id && !PROBLEMS[id] && defaultProblemId) {
+    navigate(`/problem/${defaultProblemId}`, { replace: true });
+  }
+}, [id, selectedLanguage, defaultProblemId, navigate]);
 
   const handleLanguageChange = (e) => {
-    const newLang = e.target.value;
-    setSelectedLanguage(newLang);
-    setCode(currentProblem.starterCode[newLang]);
-    setOutput(null);
-  };
+  const newLang = e.target.value;
+  setSelectedLanguage(newLang);
+  setCode(currentProblem?.starterCode?.[newLang] || "");
+  setOutput(null);
+};
 
   const handleProblemChange = (newProblemId) => navigate(`/problem/${newProblemId}`);
 
@@ -91,19 +95,19 @@ function ProblemPage() {
 
     // check if code executed successfully and matches expected output
 
-    if (result.success) {
-      const expectedOutput = currentProblem.expectedOutput[selectedLanguage];
-      const testsPassed = checkIfTestsPassed(result.output, expectedOutput);
+  if (result.success && currentProblem?.expectedOutput?.[selectedLanguage] !== undefined) {
+    const expectedOutput = currentProblem.expectedOutput[selectedLanguage];
+    const testsPassed = checkIfTestsPassed(result.output, expectedOutput);
 
-      if (testsPassed) {
-        triggerConfetti();
-        toast.success("All tests passed! Great job!");
-      } else {
-        toast.error("Tests failed. Check your output!");
-      }
+    if (testsPassed) {
+      triggerConfetti();
+      toast.success("All tests passed! Great job!");
     } else {
-      toast.error("Code execution failed!");
+      toast.error("Tests failed. Check your output!");
     }
+  }else if (!result.success) {
+    toast.error("Code execution failed!");
+  }
   };
 
   return (
