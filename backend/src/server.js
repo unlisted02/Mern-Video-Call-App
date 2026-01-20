@@ -35,11 +35,19 @@ app.get("/health", (req, res) => {
 // make our app ready for deployment
 if (ENV.NODE_ENV === "production") {
   const distPath = path.join(__dirname, "../../frontend/dist");
-  app.use(express.static(distPath));
+  
+  // Serve static files from the React build
+  app.use(express.static(distPath, { index: false }));
 
   // Catch-all handler: serve index.html for client-side routing
-  // Express 5 uses '*' instead of '/*' for catch-all routes
-  app.get("*", (_, res) => {
+  // Express 5 doesn't support wildcard routes like '/*' or '*'
+  // This middleware catches all requests that aren't API routes or static files
+  app.use((req, res, next) => {
+    // API routes and health check are handled above, so skip them
+    if (req.path.startsWith("/api") || req.path === "/health") {
+      return next();
+    }
+    // Serve index.html for all other routes (React Router handles routing)
     res.sendFile(path.join(distPath, "index.html"));
   });
 }
