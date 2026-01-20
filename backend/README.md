@@ -19,6 +19,10 @@ NODE_ENV=development
 
 DB_URL=mongodb://127.0.0.1:27017/mern_video_call   # or your Atlas URL
 
+# Migration URLs
+LOCAL_DB_URI=mongodb://127.0.0.1:27017/mern_video_call
+ATLAS_DB_URI=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/mern_video_call?retryWrites=true&w=majority
+
 INNGEST_EVENT_KEY=...
 INNGEST_SIGNING_KEY=...
 
