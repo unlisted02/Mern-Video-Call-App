@@ -37,9 +37,7 @@ if (ENV.NODE_ENV === "production") {
   const distPath = path.join(__dirname, "../../frontend/dist");
   app.use(express.static(distPath));
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
-  });
+  app.get("/*", (_, res) => { res.sendFile(path.join(distPath, "index.html")); });
 }
 
 const startServer = async () => {
