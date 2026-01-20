@@ -11,8 +11,12 @@ export const protectRoute = [
       let user = await User.findOne({ clerkId });
 
       if (!user) {
+        // Auto-create user as fallback if webhook hasn't created it yet
+        // This handles cases where webhooks fail, are delayed, or aren't configured
         const allowAutoCreate =
-          process.env.NODE_ENV === "development" || process.env.AUTO_CREATE_USER_ON_AUTH === "true";
+          process.env.NODE_ENV === "development" || 
+          process.env.AUTO_CREATE_USER_ON_AUTH === "true" ||
+          process.env.NODE_ENV === "production"; // Enable in production as fallback
 
         if (!allowAutoCreate) {
           return res.status(404).json({ message: "User not found" });
