@@ -10,6 +10,7 @@ import { inngest, functions } from "./lib/inngest.js";
 
 import chatRoutes from "./routes/chatRoutes.js";
 import sessionRoutes from "./routes/sessionRoute.js";
+import clerkWebhookRoute from "./routes/clerkWebhookRoute.js";
 import { fileURLToPath } from "url";
 
 
@@ -17,6 +18,9 @@ const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Webhook routes must be registered BEFORE express.json() to access raw body
+app.use("/api/webhooks", clerkWebhookRoute);
 
 // middleware
 app.use(express.json());
