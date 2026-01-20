@@ -37,15 +37,23 @@ if (ENV.NODE_ENV === "production") {
   const distPath = path.join(__dirname, "../../frontend/dist");
   app.use(express.static(distPath));
 
-  app.get("/*", (_, res) => { res.sendFile(path.join(distPath, "index.html")); });
+  // Catch-all handler: serve index.html for client-side routing
+  // Express 5 uses '*' instead of '/*' for catch-all routes
+  app.get("*", (_, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
+  });
 }
 
 const startServer = async () => {
-  try {
+  try { 
     await connectDB();
-    app.listen(ENV.PORT, () => console.log("Server is running on port:", ENV.PORT));
+    app.listen(ENV.PORT, "0.0.0.0", () => {
+      console.log(`🚀 Server is running on port: ${ENV.PORT}`);
+      console.log(`📦 Environment: ${ENV.NODE_ENV || "development"}`);
+    });
   } catch (error) {
-    console.error("💥 Error starting the server", error);
+    console.error("💥 Error starting the server:", error);
+    process.exit(1); // Exit with error code so Render knows deployment failed
   }
 };
 
