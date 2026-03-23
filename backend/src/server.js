@@ -37,9 +37,18 @@ app.use(clerkMiddleware()); // this adds auth field to request object: req.auth(
 app.use("/api/chat", chatRoutes);
 app.use("/api/sessions", sessionRoutes);
 
-app.get("/health", (req, res) => {
-  res.status(200).json({ msg: "api is up and running" });
-});
+const healthHandler = (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    message: "API is up and running",
+    env: ENV.NODE_ENV || "development",
+    uptimeSeconds: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+  });
+};
+
+app.get("/health", healthHandler);
+app.get("/api/health", healthHandler);
 
 // make our app ready for deployment
 if (ENV.NODE_ENV === "production") {
