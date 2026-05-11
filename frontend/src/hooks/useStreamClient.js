@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { initializeStreamClient, disconnectStreamClient } from "../lib/stream";
 import { sessionApi } from "../api/sessions";
 
-function useStreamClient(session, loadingSession, isHost, isParticipant) {
+function useStreamClient(session, loadingSession, isHost, isParticipant, isReadyToJoin = true) {
   const [streamClient, setStreamClient] = useState(null);
   const [call, setCall] = useState(null);
   const [chatClient, setChatClient] = useState(null);
@@ -19,6 +19,7 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
       if (!session?.callId) return;
       if (!isHost && !isParticipant) return;
       if (session.status === "completed") return;
+      if (!isReadyToJoin) return;
 
       try {
         const { token, userId, userName, userImage } = await sessionApi.getStreamToken();
@@ -62,7 +63,7 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
       }
     };
 
-    if (session && !loadingSession) initCall();
+    if (session && !loadingSession && isReadyToJoin) initCall();
 
     // cleanup - performance reasons
     return () => {
@@ -77,7 +78,7 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
         }
       })();
     };
-  }, [session, loadingSession, isHost, isParticipant]);
+  }, [session, loadingSession, isHost, isParticipant, isReadyToJoin]);
 
   return {
     streamClient,
