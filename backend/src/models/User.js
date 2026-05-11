@@ -1,5 +1,20 @@
 import mongoose from "mongoose";
 
+const backgroundPreferenceSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: ["none", "blur", "unsplash", "upload"],
+      default: "none",
+    },
+    value: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -19,6 +34,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+    },
+    backgroundPreference: {
+      type: backgroundPreferenceSchema,
+      default: () => ({ type: "none", value: {} }),
     },
   },
   { timestamps: true } // createdAt, updatedAt

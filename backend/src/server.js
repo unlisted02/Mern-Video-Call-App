@@ -11,6 +11,8 @@ import { inngest, functions } from "./lib/inngest.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import sessionRoutes from "./routes/sessionRoute.js";
 import clerkWebhookRoute from "./routes/clerkWebhookRoute.js";
+import backgroundRoutes from "./routes/backgroundRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 import { fileURLToPath } from "url";
 
 
@@ -36,6 +38,8 @@ app.use(clerkMiddleware()); // this adds auth field to request object: req.auth(
 // Protected API routes (require authentication)
 app.use("/api/chat", chatRoutes);
 app.use("/api/sessions", sessionRoutes);
+app.use("/api/backgrounds", backgroundRoutes);
+app.use("/api/users", userRoutes);
 
 const healthHandler = (req, res) => {
   res.status(200).json({

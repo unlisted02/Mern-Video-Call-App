@@ -14,6 +14,11 @@ import OutputPanel from "../components/OutputPanel";
 import useStreamClient from "../hooks/useStreamClient";
 import { StreamCall, StreamVideo } from "@stream-io/video-react-sdk";
 import VideoCallUI from "../components/VideoCallUI";
+import PreCallPreviewModal from "../components/PreCallPreviewModal";
+import {
+  useBackgroundPreference,
+  useSaveBackgroundPreference,
+} from "../hooks/useBackgroundPreferences";
 
 function SessionPage() {
   const navigate = useNavigate();
@@ -21,8 +26,12 @@ function SessionPage() {
   const { user } = useUser();
   const [output, setOutput] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [isPreviewConfirmed, setIsPreviewConfirmed] = useState(false);
+  const [selectedPreference, setSelectedPreference] = useState({ type: "none", value: {} });
 
   const { data: sessionData, isLoading: loadingSession, refetch } = useSessionById(id);
+  const { data: savedPreference } = useBackgroundPreference();
+  const saveBackgroundPreferenceMutation = useSaveBackgroundPreference();
 
   const joinSessionMutation = useJoinSession();
   const endSessionMutation = useEndSession();
@@ -31,11 +40,16 @@ function SessionPage() {
   const isHost = session?.host?.clerkId === user?.id;
   const isParticipant = session?.participant?.clerkId === user?.id;
 
+  const canShowPreview = Boolean(
+    session && !loadingSession && session.status === "active" && (isHost || isParticipant)
+  );
+
   const { call, channel, chatClient, isInitializingCall, streamClient } = useStreamClient(
     session,
     loadingSession,
     isHost,
-    isParticipant
+    isParticipant,
+    isPreviewConfirmed
   );
 
   // find the problem data based on session problem title
@@ -54,7 +68,13 @@ function SessionPage() {
     joinSessionMutation.mutate(id, { onSuccess: refetch });
 
     // remove the joinSessionMutation, refetch from dependencies to avoid infinite loop
-  }, [session, user, loadingSession, isHost, isParticipant, id]);
+  }, [session, user, loadingSession, isHost, isParticipant, id, joinSessionMutation, refetch]);
+
+  useEffect(() => {
+    if (savedPreference) {
+      setSelectedPreference(savedPreference);
+    }
+  }, [savedPreference]);
 
   // redirect the "participant" when session ends
   useEffect(() => {
@@ -257,7 +277,14 @@ function SessionPage() {
           {/* RIGHT PANEL - VIDEO CALLS & CHAT */}
           <Panel defaultSize={50} minSize={30}>
             <div className="h-full bg-base-200 p-4 overflow-auto">
-              {isInitializingCall ? (
+              {!isPreviewConfirmed && canShowPreview ? (
+                <div className="h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <Loader2Icon className="w-12 h-12 mx-auto animate-spin text-primary mb-4" />
+                    <p className="text-lg">Waiting for pre-call confirmation...</p>
+                  </div>
+                </div>
+              ) : isInitializingCall ? (
                 <div className="h-full flex items-center justify-center">
                   <div className="text-center">
                     <Loader2Icon className="w-12 h-12 mx-auto animate-spin text-primary mb-4" />
@@ -280,7 +307,16 @@ function SessionPage() {
                 <div className="h-full">
                   <StreamVideo client={streamClient}>
                     <StreamCall call={call}>
-                      <VideoCallUI chatClient={chatClient} channel={channel} />
+                      <VideoCallUI
+                        chatClient={chatClient}
+                        channel={channel}
+                        selectedPreference={selectedPreference}
+                        onPreferenceChange={setSelectedPreference}
+                        onSaveDefault={(preference) =>
+                          saveBackgroundPreferenceMutation.mutate(preference)
+                        }
+                        isSavingDefault={saveBackgroundPreferenceMutation.isPending}
+                      />
                     </StreamCall>
                   </StreamVideo>
                 </div>
@@ -289,6 +325,15 @@ function SessionPage() {
           </Panel>
         </PanelGroup>
       </div>
+      <PreCallPreviewModal
+        isOpen={!isPreviewConfirmed && canShowPreview}
+        selectedPreference={selectedPreference}
+        onSelectPreference={setSelectedPreference}
+        onSaveDefault={(preference) => saveBackgroundPreferenceMutation.mutate(preference)}
+        isSavingDefault={saveBackgroundPreferenceMutation.isPending}
+        onConfirm={() => setIsPreviewConfirmed(true)}
+        onClose={() => navigate("/dashboard")}
+      />
     </div>
   );
 }
